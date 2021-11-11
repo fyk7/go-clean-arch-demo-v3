@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"time"
 
 	_db "github.com/fyk7/go-clean-arch-demo-v3/app/database"
 	_userService "github.com/fyk7/go-clean-arch-demo-v3/app/domain/service"
@@ -21,9 +22,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	timeoutContext := time.Duration(2) * time.Second
 	userRepository := _userRepository.NewSqlUserRepository(dbConn)
 	userService := _userService.NewUserService(userRepository)
-	userUsecase := _userInteractor.NewUserInteractor(userRepository, userService)
+	userUsecase := _userInteractor.NewUserInteractor(userRepository, userService, timeoutContext)
 
 	e := echo.New()
 	mdlWare := _middleware.InitMiddleware()

@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/fyk7/go-clean-arch-demo-v3/app/domain/model"
 	"github.com/fyk7/go-clean-arch-demo-v3/app/domain/repository"
@@ -17,19 +18,24 @@ type UserInteractor interface {
 }
 
 type userInteractor struct {
-	repo    repository.UserRepository
-	service *service.UserService
+	repo           repository.UserRepository
+	service        *service.UserService
+	contextTimeout time.Duration
 }
 
-func NewUserInteractor(repo repository.UserRepository, service *service.UserService) *userInteractor {
+func NewUserInteractor(repo repository.UserRepository, service *service.UserService, timeout time.Duration) *userInteractor {
 	return &userInteractor{
-		repo:    repo,
-		service: service,
+		repo:           repo,
+		service:        service,
+		contextTimeout: timeout,
 	}
 }
 
 func (u *userInteractor) ListUser(c context.Context) ([]*model.User, error) {
-	users, err := u.repo.FindAll(c)
+	ctx, cancel := context.WithTimeout(c, u.contextTimeout)
+	defer cancel()
+
+	users, err := u.repo.FindAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to LidyUser in usecase: %w", err)
 	}
@@ -37,7 +43,10 @@ func (u *userInteractor) ListUser(c context.Context) ([]*model.User, error) {
 }
 
 func (u *userInteractor) GetUserByEmail(c context.Context, email string) (*model.User, error) {
-	user, err := u.repo.FindByEmail(c, email)
+	ctx, cancel := context.WithTimeout(c, u.contextTimeout)
+	defer cancel()
+
+	user, err := u.repo.FindByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
@@ -46,18 +55,21 @@ func (u *userInteractor) GetUserByEmail(c context.Context, email string) (*model
 
 // TODO userを返すようにする
 func (u *userInteractor) Create(c context.Context, email string) (*model.User, error) {
+	ctx, cancel := context.WithTimeout(c, u.contextTimeout)
+	defer cancel()
+
 	uid, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
-	if err = u.service.Duplicated(c, email); err != nil {
+	if err = u.service.Duplicated(ctx, email); err != nil {
 		return nil, err
 	}
 	user := &model.User{
 		ID:    uid.String(),
 		Email: email,
 	}
-	user, err = u.repo.Save(c, user)
+	user, err = u.repo.Save(ctx, user)
 	if err != nil {
 		return nil, err
 	}
