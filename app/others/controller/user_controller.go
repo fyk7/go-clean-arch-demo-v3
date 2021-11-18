@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	user_req "github.com/fyk7/go-clean-arch-demo-v3/app/others/controller/request"
@@ -65,8 +66,9 @@ func (uc *userController) CreateUser(c echo.Context) error {
 
 	user, err := uc.userInteractor.Create(ctx, params.Email)
 	if !errors.Is(err, nil) {
-		// return err
-		return c.JSON(http.StatusBadRequest, "already exists user!!")
+		fmt.Println(err)
+		// TODO judge error
+		return c.JSON(http.StatusBadRequest, "Invalid Request")
 	}
 	user_resp := user_res.ToCreateUserResp(user)
 
