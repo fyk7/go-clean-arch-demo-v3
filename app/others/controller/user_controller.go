@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	user_req "github.com/fyk7/go-clean-arch-demo-v3/app/others/controller/request"
-	user_res "github.com/fyk7/go-clean-arch-demo-v3/app/others/controller/response"
 	interactor "github.com/fyk7/go-clean-arch-demo-v3/app/usecase/interactor"
 	"github.com/labstack/echo/v4"
 )
@@ -42,6 +40,12 @@ func (uc *userController) GetUsers(c echo.Context) error {
 }
 
 func (uc *userController) GetByEmail(c echo.Context) error {
+	type (
+		CreateUserResponse struct {
+			ID    string
+			Email string
+		}
+	)
 	ctx := c.Request().Context()
 	// TODO validate email in controller or usecase
 	email := c.Param("email")
@@ -51,15 +55,28 @@ func (uc *userController) GetByEmail(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, user_res.ToCreateUserResp(u))
+	user_resp := CreateUserResponse{
+		ID:    u.ID,
+		Email: u.Email,
+	}
+	return c.JSON(http.StatusOK, user_resp)
 
 }
 
 func (uc *userController) CreateUser(c echo.Context) error {
+	type (
+		// TODO Define validator
+		CreateUserRequest struct {
+			Email string `json:"email"`
+		}
+		CreateUserResponse struct {
+			ID    string
+			Email string
+		}
+	)
 	ctx := c.Request().Context()
-	var params user_req.CreateUserRequest
+	var params CreateUserRequest
 
-	// TODO validate CreateUserReqest struct
 	if err := c.Bind(&params); !errors.Is(err, nil) {
 		return err
 	}
@@ -70,7 +87,10 @@ func (uc *userController) CreateUser(c echo.Context) error {
 		// TODO judge error
 		return c.JSON(http.StatusBadRequest, "Invalid Request")
 	}
-	user_resp := user_res.ToCreateUserResp(user)
+	user_resp := CreateUserResponse{
+		ID:    user.ID,
+		Email: user.Email,
+	}
 
 	return c.JSON(http.StatusCreated, user_resp)
 }
