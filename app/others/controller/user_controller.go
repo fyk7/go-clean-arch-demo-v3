@@ -41,7 +41,7 @@ func (uc *userController) GetUsers(c echo.Context) error {
 
 func (uc *userController) GetByEmail(c echo.Context) error {
 	type (
-		CreateUserResponse struct {
+		GetUserResponse struct {
 			ID    string
 			Email string
 		}
@@ -55,7 +55,7 @@ func (uc *userController) GetByEmail(c echo.Context) error {
 		return err
 	}
 
-	user_resp := CreateUserResponse{
+	user_resp := GetUserResponse{
 		ID:    u.ID,
 		Email: u.Email,
 	}
